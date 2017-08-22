@@ -1,6 +1,17 @@
-This is release 3.5.1 of the SAL SDK (July 11, 2017)
+This is release 3.6.0 of the SAL SDK (August 22, 2017)
 
 Please refer to the SAL User Guide for installation instructions.
+
+Changes for 3.6.0
+
+Add Enclosure Environmental Conditioning subsystem
+Add calibration subsystem devices
+Add Aux telescope devices
+Fix long long datatype
+Improve maven project generation efficiency
+LabVIEW bug fixes
+Add EFD writers option to salgenerator
+Remove generic command/event generation from salgenerator
 
 Changes for 3.5.1
 
