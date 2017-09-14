@@ -12,10 +12,10 @@ proc calcshmid { subsys } {
 #
 #  e.g. set SYSDIC(m2,hasGenerics) 1
 #
-
+set SYSDIC(dmHeaderService,hasGenerics) 1
 
 set SYSDIC(systems) "accl archiver atMonochromator atWhiteLight auxscope calibrationSpectrometer calibrationElectrometer camera 
-catchuparchiver dome domeADB domeAPS domeLouvers domeLWS domeMONCS domeTHCS eec environment EXA hexapod lasercal m1m3 m2ms MTMount network ocs operations power processingcluster rotator sequencer scheduler seeing skycam system tcs"
+catchuparchiver dmHeaderService dome domeADB domeAPS domeLouvers domeLWS domeMONCS domeTHCS eec environment EXA hexapod lasercal m1m3 m2ms MTMount network ocs operations power processingcluster rotator sequencer scheduler seeing skycam system tcs"
 foreach s $SYSDIC(systems) {set SYSDIC($s,type) system}
 
 set SYSDIC(datatypes) "byte short int long float string int64 double ubyte ushort uint ulong"
