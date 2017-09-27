@@ -15,6 +15,7 @@ proc calcshmid { subsys } {
 set SYSDIC(dmHeaderService,hasGenerics) 1
 set SYSDIC(tcsAOCS,hasGenerics) 1
 set SYSDIC(tcsWEP,hasGenerics) 1
+set SYSDIC(m1m3,hasGenerics) 1
 
 set SYSDIC(systems) "accl archiver atMonochromator atWhiteLight auxscope calibrationSpectrometer calibrationElectrometer camera 
 catchuparchiver dmHeaderService dome domeADB domeAPS domeLouvers domeLWS domeMONCS domeTHCS eec environment EXA hexapod lasercal m1m3 m2ms MTMount network ocs operations power processingcluster rotator sequencer scheduler seeing skycam system tcs tcsAOCS tcsWEP "
