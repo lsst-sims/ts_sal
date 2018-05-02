@@ -45,8 +45,8 @@ set SYSDIC(m1m3,hasGenericEvents) 1
 #set SYSDIC(tcsWEP,hasGenerics) 1
 #set SYSDIC(vms,hasGenerics) 1
 
-set SYSDIC(systems) "atcamera atHeaderService accl archiver atcs atMonochromator atScheduler atWhiteLight calibrationCBP calibrationMonochromator calibrationSpectrometer camera 
-catchuparchiver comcam headerService dome domeADB domeAPS domeLouvers domeLWS domeMONCS domeTHCS eec efd electrometer environment EXA hexapod lasercal m1m3 m2ms MTMount network ocs operations power processingcluster rotator sedSpectrometer sequencer scheduler seeing skycam summitFacility system tcs tcsOfc tcsWEP vms"
+set SYSDIC(systems) "atArchiver atcamera atHeaderService accl archiver atcs atMonochromator atScheduler atWhiteLight calibrationCBP calibrationMonochromator calibrationSpectrometer camera 
+catchuparchiver comcam headerService dome domeADB domeAPS domeLouvers domeLWS domeMONCS domeTHCS eec efd electrometer environment EXA hexapod lasercal m1m3 m2ms MTMount network ocs operations power promptProcessing rotator sedSpectrometer sequencer scheduler seeing skycam summitFacility system tcs tcsOfc tcsWEP vms"
 
 foreach s $SYSDIC(systems) {set SYSDIC($s,type) system}
 
