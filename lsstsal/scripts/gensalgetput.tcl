@@ -51,9 +51,6 @@ salReturn SAL_[set base]::putSample_[set name]([set base]_[set name]C *data)
   Instance.private_sndStamp = getCurrentTime();
   ReturnCode_t status = SALWriter->write(Instance, dataHandle);
   checkStatus(status, \"[set base]::[set name]DataWriter::write\");  
-#ifdef SAL_SUBSYSTEM_ID_IS_KEYED
-          SALWriter->unregister_instance(Instance, dataHandle);
-#endif
 #ifdef SAL_BUILD_FOR_PYTHON
   Py_END_ALLOW_THREADS
 #endif
@@ -190,6 +187,8 @@ global SAL_WORK_DIR
       incr idx 1 
    }
    close $fact
+   set tuneableQos false
+###   if { $base == "m1m3" } {set tuneableQos false}
    puts $fout "
 void SAL_SALData::initSalActors ()
 \{
@@ -205,7 +204,7 @@ void SAL_SALData::initSalActors ()
       sal\[i\].maxSamples = LENGTH_UNLIMITED;
       sal\[i\].sampleAge = 100.0;
       sal\[i\].historyDepth = 10000;
-      sal\[i\].tuneableQos = true;
+      sal\[i\].tuneableQos = [set tuneableQos];
     \}
 "
    set idx 0
@@ -328,8 +327,7 @@ puts $fout "
 	   SALWriter.register_instance(data);
 	   status = SALWriter.write(data, dataHandle);
 	   checkStatus(status, \"[set name]DataWriter.write\");
-           SALWriter.dispose(data, dataHandle);
-           SALWriter.unregister_instance(data, dataHandle);"
+           SALWriter.dispose(data, dataHandle);"
         } else { 
           puts $fout "
            long dataHandle = HANDLE_NIL.value;
@@ -548,9 +546,6 @@ salReturn SAL_[set base]::putSample([set base]::[set name] data)
   data.private_sndStamp = getCurrentTime();
   ReturnCode_t status = SALWriter->write(data, dataHandle);
   checkStatus(status, \"[set base]::[set name]DataWriter::write\");  
-#ifdef SAL_SUBSYSTEM_ID_IS_KEYED
-          SALWriter->unregister_instance(data, dataHandle);
-#endif
   return status;
 \}
 

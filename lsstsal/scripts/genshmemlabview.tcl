@@ -30,8 +30,8 @@ global SAL_DIR SAL_WORK_DIR
   set idlfile $SAL_WORK_DIR/idl-templates/validated/sal/sal_[set subsys].idl
   set ptypes [lsort [split [exec grep pragma $idlfile] \n]]
   set base $subsys
-  updateLabVIEWTypes $base
   genlabviewidl  $base
+###  updateLabVIEWTypes $base
   genlabviewincl $base $ptypes
   genlabviewcpp  $base $ptypes
   genlabviewmake $base
@@ -70,13 +70,15 @@ global SAL_WORK_DIR EVENT_ENUMS
       if { [lsearch "ack\;" [lindex $it 1]] > -1 } {
          puts $fout "      long	cmdSeqNum;"
       }
-      if { [lsearch "device\; property\; action\; value\;" [lindex $it 1]] < 0 } {
+      if { [string range [lindex $it 1] 0 7] != "private_" && [lindex $it 1] != "[set subsys]ID;" } {
+       if { [lsearch "device\; property\; action\; value\;" [lindex $it 1]] < 0 } {
          set name [string trim [lindex $it 1] ";"]
          if { [info exists EVENT_ENUMS($topic,$name)] } {
            puts $fout "$rec	// enum : $EVENT_ENUMS($topic,$name)"
          } else {
            puts $fout $rec
          }
+       }
       }
    }
    close $fin
@@ -86,7 +88,7 @@ global SAL_WORK_DIR EVENT_ENUMS
 
 
 proc genlabviewmake { subsys } {
-global SAL_DIR SAL_WORK_DIR env
+global SAL_DIR SAL_WORK_DIR SYSDIC env
   if { [info exists env(LABVIEW_HOME)] } {
      set lvv [file tail [glob $env(LABVIEW_HOME)/LabVIEW*64]]
   } else {
@@ -314,8 +316,19 @@ using namespace [set base];
       int actorIdx = 0;
       [set base]_shmem *[set base]_memIO;
       lShmId = shmget([set base]_shmid + [set idoff], shmSize , IPC_CREAT|0666);
-      [set base]_memIO  = ([set base]_shmem *) shmat(lShmId, NULL, 0);
+      [set base]_memIO  = ([set base]_shmem *) shmat(lShmId, NULL, 0);"
+   if { [info exists SYSDIC($base,keyedID)] } {
+     puts $fout "
+      SAL_[set base] mgr\[20\] = \{
+		SAL_[set base]([set idoff]), SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),
+		SAL_[set base]([set idoff]), SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),
+		SAL_[set base]([set idoff]), SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),
+		SAL_[set base]([set idoff]), SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),
+		SAL_[set base]([set idoff]), SAL_[set base]([set idoff]),SAL_[set base]([set idoff]),SAL_[set base]([set idoff]) \};"
+   } else {
+     puts $fout "
       SAL_[set base] mgr\[20\];"
+  }
   foreach j $ptypes {
      set name [lindex $j 2]
      monitorsyncinit $fout $base $name
