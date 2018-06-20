@@ -57,17 +57,17 @@ global SQLREC TYPEFORMAT
       } 
 ###puts stdout "$i $type $name $isarray"
       if { $isarray == "" } {
-              set value "[set ldata]\[0\].[set name]"
+              set value "[set ldata]\[iloop\].[set name]"
               set vform $TYPEFORMAT($type)
               if { $type == "char" } {
                  set vform "'$TYPEFORMAT($type)'"
               }
       } else {
-             set value "[set ldata]\[0\].[set name]\[0\]"
+             set value "[set ldata]\[iloop\].[set name]\[iloop\]"
              set vform "$TYPEFORMAT($type)"
              set j 1
              while { $j <= [expr $isarray -1] } {
-                set value "$value,[set ldata]\[0\].[set name]\[$j\]"
+                set value "$value,[set ldata]\[iloop\].[set name]\[$j\]"
                 set vform "$vform, $TYPEFORMAT($type)"
                 incr j 1
              }
@@ -120,9 +120,12 @@ global ACTORTYPE SAL_WORK_DIR BLACKLIST
      set topic [lindex $j 2]
      set type [lindex [split $topic _] 0]
      set doit 0
+     set trail  [string range $topic [expr [string bytelength $topic]-9] end]
+     set trail2 [string range $topic [expr [string bytelength $topic]-15] end]
      if { $ttype == "command" && $type == "command" || $topic == "ackcmd"} {set doit 1}
      if { $ttype == "logevent" && $type == "logevent" && $topic != "ackcmd"} {set doit 1}
      if { $ttype == "telemetry" && $type != "command" && $type != "logevent" && $topic != "ackcmd" } {set doit 1}
+     if { $trail == "Heartbeat" || $trail2 == "InternalCommand" } {set doit 0}
      if { [info exists BLACKLIST([set topic])] } {set doit 0}
      if { $doit } {
 #      if { $ctype == "init" } {
@@ -142,11 +145,13 @@ global ACTORTYPE SAL_WORK_DIR BLACKLIST
         puts $fout "  
        [set base]::[set topic]Seq myData_[set topic];
        SampleInfoSeq_var [set topic]_info = new SampleInfoSeq;
-       status = [set topic]_SALReader->take(myData_[set topic], [set topic]_info, 1, ANY_SAMPLE_STATE, ANY_VIEW_STATE, ANY_INSTANCE_STATE);
+       status = [set topic]_SALReader->take(myData_[set topic], [set topic]_info, 100, ANY_SAMPLE_STATE, ANY_VIEW_STATE, ANY_INSTANCE_STATE);
        checkStatus(status,\"[set base]::[set topic]DataReader::take\");
        numsamp = myData_[set topic].length();
        if (status == SAL__OK && numsamp > 0) \{
-          myData_[set topic]\[0\].private_rcvStamp = mgr.getCurrentTime();"
+        for (iloop=0;iloop<numsamp;iloop++) \{
+         if (myData_[set topic]\[iloop\].private_origin != 0) \{
+          myData_[set topic]\[iloop\].private_rcvStamp = mgr.getCurrentTime();"
        if { $topic != "ackcmd" } {
          puts $fout "
           [writetoefd [set base]_[set topic]]
@@ -155,45 +160,44 @@ global ACTORTYPE SAL_WORK_DIR BLACKLIST
           if (mstatus) \{
              fprintf(stderr,\"MYSQL INSERT ERROR : %d : %s\\n\",mstatus,thequery);
           \}
-          if (myData_[set topic]\[0\].private_origin > 0) \{
+          if (myData_[set topic]\[iloop\].private_origin > 0) \{
             if (isyslog > 0) \{
                syslog(NULL,\"%s\",thequery);
             \}
           \}"
          }
-         puts $fout "       \}"
+###         puts $fout "       \}"
            checkLFO $fout $topic
          }
          if { $type == "command" && $ttype == "command" && $topic != "ackcmd" } {
            set alias "'[join [lrange [split $topic _] 1 end] _]'"
            if { $alias != "''" } {
             puts $fout "
-       if (status == SAL__OK && numsamp > 0) \{
           sprintf(thequery,\"INSERT INTO [set base]_commandLog VALUES (NOW(6),'%s', %lf, %d, $alias, 0, 0 )\" , 
-                    myData_[set topic]\[0\].private_revCode.m_ptr, myData_[set topic]\[0\].private_sndStamp, myData_[set topic]\[0\].private_seqNum);
+                    myData_[set topic]\[iloop\].private_revCode.m_ptr, myData_[set topic]\[iloop\].private_sndStamp, myData_[set topic]\[iloop\].private_seqNum);
           mstatus = mysql_query(con,thequery);
 //          cout << thequery << endl;
           if (mstatus) \{
              fprintf(stderr,\"MYSQL INSERT ERROR : %d : %s\\n\",mstatus,thequery);
-          \}
-       \}"
+          \}"
           }
          }
          if { $ttype == "command" && $topic == "ackcmd" } {
            set alias "'ackcmd'"
            puts $fout "
-       if (status == SAL__OK && numsamp > 0) \{
           sprintf(thequery,\"INSERT INTO [set base]_commandLog VALUES (NOW(6), '%s', %lf, %d, $alias, %d, %d )\" , 
-                    myData_[set topic]\[0\].private_revCode.m_ptr, myData_[set topic]\[0\].private_sndStamp, myData_[set topic]\[0\].private_seqNum,myData_[set topic]\[0\].ack,myData_[set topic]\[0\].error);
+                    myData_[set topic]\[iloop\].private_revCode.m_ptr, myData_[set topic]\[iloop\].private_sndStamp, myData_[set topic]\[iloop\].private_seqNum,myData_[set topic]\[iloop\].ack,myData_[set topic]\[iloop\].error);
           mstatus = mysql_query(con,thequery);
 //          cout << thequery << endl;
           if (mstatus) \{
              fprintf(stderr,\"MYSQL INSERT ERROR : %d : %s\\n\",mstatus,thequery);
-          \}
-       \}"
+          \}"
          }
          if { $topic != "command" && $topic != "logevent" } {
-           puts $fout "       status = [set topic]_SALReader->return_loan(myData_[set topic], [set topic]_info);
+           puts $fout "         \}
+        \}
+       \}
+       status = [set topic]_SALReader->return_loan(myData_[set topic], [set topic]_info);
 "
          }
       }
@@ -209,7 +213,7 @@ proc checkLFO { fout topic } {
      puts $fout "
        if (status == SAL__OK && numsamp > 0) \{
            printf(\"EFD TBD : Large File Object Announcement Event $topic received\\n\");
-           sprintf(thequery,\"process_LFO_logevent  %d '%s' '%s' '%s' '%s' %f '%s'\"  ,  myData_[set topic]\[0\].Byte_Size , myData_[set topic]\[0\].Checksum.m_ptr , myData_[set topic]\[0\].Generator.m_ptr , myData_[set topic]\[0\].Mime.m_ptr , myData_[set topic]\[0\].URL.m_ptr , myData_[set topic]\[0\].Version, myData_[set topic]\[0\].ID.m_ptr);
+           sprintf(thequery,\"process_LFO_logevent  %d '%s' '%s' '%s' '%s' %f '%s'\"  ,  myData_[set topic]\[iloop\].Byte_Size , myData_[set topic]\[iloop\].Checksum.m_ptr , myData_[set topic]\[iloop\].Generator.m_ptr , myData_[set topic]\[iloop\].Mime.m_ptr , myData_[set topic]\[iloop\].URL.m_ptr , myData_[set topic]\[iloop\].Version, myData_[set topic]\[iloop\].ID.m_ptr);
           mstatus = system(thequery);
           if (mstatus < 0) \{
              fprintf(stderr,\"LFO Processor ERROR : %d\\n\",mstatus);
@@ -273,10 +277,11 @@ int test_[set base]_telemetry_efdwriter()
 "
   genericefdfragment $fout $base telemetry init
   puts $fout "
-  os_time delay_1ms = \{ 0, 1000000 \};
+  os_time delay_10us = \{ 0, 10000 \};
   int numsamp = 0;
   int actorIdx = 0;
   int isyslog = 1;
+  int iloop = 0;
   int mstatus = 0;
   int status = 0;"
   genericefdfragment $fout $base telemetry subscriber
@@ -286,7 +291,7 @@ int test_[set base]_telemetry_efdwriter()
 "
   genericefdfragment $fout $base telemetry getsamples
    puts $fout "
-          os_nanoSleep(delay_1ms);
+          os_nanoSleep(delay_10us);
       \}
 
   /* Remove the DataWriters etc */
@@ -344,10 +349,11 @@ int test_[set base]_event_efdwriter()
   genericefdfragment $fout $base logevent init
 
   puts $fout "
-  os_time delay_1ms = \{ 0, 1000000 \};
+  os_time delay_10us = \{ 0, 10000 \};
   int numsamp = 0;
   int actorIdx = 0;
   int isyslog = 1;
+  int iloop = 0;
   int mstatus = 0;
   int status=0;"
   genericefdfragment $fout $base logevent subscriber
@@ -357,7 +363,7 @@ int test_[set base]_event_efdwriter()
 "
   genericefdfragment $fout $base logevent getsamples
    puts $fout "
-     os_nanoSleep(delay_1ms);
+     os_nanoSleep(delay_10us);
   \}
 
   /* Remove the DataWriters etc */
@@ -413,10 +419,11 @@ int test_[set base]_command_efdwriter()
 "
   genericefdfragment $fout $base command init
   puts $fout "
-  os_time delay_1ms = \{ 0, 1000000 \};
+  os_time delay_10us = \{ 0, 10000 \};
   int numsamp = 0;
   int actorIdx = 0;
   int isyslog = 1;
+  int iloop = 0;
   int mstatus = 0;
   int status=0;"
   genericefdfragment $fout $base command subscriber
@@ -426,7 +433,7 @@ int test_[set base]_command_efdwriter()
 "
   genericefdfragment $fout $base command getsamples
    puts $fout "
-     os_nanoSleep(delay_1ms);
+     os_nanoSleep(delay_10us);
   \}
 
   /* Remove the DataWriters etc */
