@@ -105,7 +105,7 @@ global env SAL_WORK_DIR SAL_DIR SALVERSION OSPL_VERSION
         <dependency>
             <groupId>opensplice.dds</groupId>
             <artifactId>dcpssaj</artifactId>
-            <version>6.4.1</version>
+            <version>6.7.0</version>
         </dependency>
     </dependencies>
     <repositories>
