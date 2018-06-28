@@ -135,7 +135,7 @@ public class [set subsys]EventLogger_[set alias]Test extends TestCase \{
        puts $fcmd "                finished = true;
              \}
              count++;
-             if ( count > 99 ) \{
+             if ( count > 9 ) \{
                 finished=true;
              \}
  	     try \{Thread.sleep(100);\} catch (InterruptedException e)  \{ e.printStackTrace(); \}
